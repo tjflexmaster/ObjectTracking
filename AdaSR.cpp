@@ -26,6 +26,7 @@ void AdaSR::setup(QRect selection, cv::Mat img)
     if ( initializeAdaSR() ) {
         //Emit Signal saying it is initialized
         emit setupComplete();
+        emit trackedPoint(latest_point);
     } else {
         //Emit Error with initialization
         emit error();
@@ -106,7 +107,7 @@ bool AdaSR::findObject()
     QPoint predicted_point(point.at<float>(0,0), point.at<float>(1,0));
 
 //        qDebug() << _object.center();
-//        qDebug() << predicted_point;
+    qDebug() << "Predicted Point: " << predicted_point;
 
 
     //During the tracking we only look for the object within the frame, we do not
@@ -164,6 +165,9 @@ bool AdaSR::findObject()
                 }
             }
         }
+
+        //move min_diff_point to a point that is relative to the entire image instead of to the search_area_sample
+        min_diff_point += search_area_sample_top_left;
 
         //Update the Kalman filter with these new measurements
         for(int i=0; i < _sample_count + 2; i++) {

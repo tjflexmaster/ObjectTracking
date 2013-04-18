@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(capture_thread, SIGNAL(started()), video_capturer, SLOT(startCapture()));
     connect(capture_thread, SIGNAL(finished()), video_capturer, SLOT(deleteLater()));
 
-    capture_thread->start();
+//    capture_thread->start();
 
     connect(video_capturer, SIGNAL(currentFrame(cv::Mat)), this, SLOT(processNextFrame(cv::Mat)));
     connect(this, SIGNAL(startCapture()), video_capturer, SLOT(startCapture()));
@@ -188,7 +188,6 @@ void MainWindow::actionPlayOrPause()
 void MainWindow::actionNextFrame()
 {
     cv::Mat image;
-    this->ui->information_display->appendPlainText(QString("Processing Next Image..."));
     QString path("C:\\Users\\TJ-ASUS\\Downloads\\redteam\\frame00000");
     QString num = QString::number(frame_number);
     QString mod_path = path.left(path.size() - num.size());
@@ -200,17 +199,20 @@ void MainWindow::actionNextFrame()
         return;
     }
 
-    current_frame = image;
+    this->ui->information_display->appendPlainText(QString("Loaded Image: ") + final);
+
+    image.copyTo(current_frame);
     cv::cvtColor(image, image, CV_BGR2RGB);
     QImage original_img((uchar*)image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
     ui->original_display->setPixmap(QPixmap::fromImage(original_img));
 
     if ( _initialized ) {
+        this->ui->information_display->appendPlainText(QString("Tracking Object ") + QTime::currentTime().toString("hh:mm:ss.zzz"));
+        next_frame_action->setDisabled(true);
         emit trackObject(image);
     }
 
-//    next_frame_action->setDisabled(true);
-    frame_number++;
+    frame_number+=5;
 }
 
 void MainWindow::toggleViewer()
@@ -223,16 +225,37 @@ void MainWindow::handleNewSelection(QRect rect)
 {
     _selection = rect;
     _update_sample_window = true;
+
+    if ( current_frame.empty() || !next_frame_action->isEnabled() )
+        return;
+
+    next_frame_action->setDisabled(true);
+    this->ui->information_display->appendPlainText(QString("Initializing AdaSR ") + QTime::currentTime().toString("hh:mm:ss.zzz"));
+    emit setupAdaSR(_selection, current_frame);
 }
 
 void MainWindow::handleTrackedPoint(QPoint point)
 {
+    this->ui->information_display->appendPlainText(QString("Tracking Complete! ") + QTime::currentTime().toString("hh:mm:ss.zzz"));
     qDebug() << "Latest Point: " << point;
     latest_point = point;
     _initialized = true;
+
+    current_frame.copyTo(mat_processed);
+
+    cv::circle(mat_processed, cv::Point(latest_point.x(), latest_point.y()), 30, cv::Scalar(0,255,0));
+
+    cv::cvtColor(mat_processed, mat_processed, CV_BGR2RGB);
+    QImage processed_img((uchar*)mat_processed.data, mat_processed.cols, mat_processed.rows, mat_processed.step, QImage::Format_RGB888);
+
+    ui->processed_display->setPixmap(QPixmap::fromImage(processed_img));
+
+    next_frame_action->setDisabled(false);
 }
 
 void MainWindow::handleAdaSRReady()
 {
+    this->ui->information_display->appendPlainText(QString("AdaSR Initialized ") + QTime::currentTime().toString("hh:mm:ss.zzz"));
     _initialized = true;
+    next_frame_action->setDisabled(false);
 }

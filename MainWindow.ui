@@ -17,10 +17,10 @@
    <widget class="SelectorLabel" name="original_display">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>640</width>
-      <height>480</height>
+      <x>80</x>
+      <y>100</y>
+      <width>352</width>
+      <height>240</height>
      </rect>
     </property>
     <property name="autoFillBackground">
@@ -33,10 +33,10 @@
    <widget class="QLabel" name="processed_display">
     <property name="geometry">
      <rect>
-      <x>660</x>
-      <y>10</y>
-      <width>640</width>
-      <height>480</height>
+      <x>670</x>
+      <y>100</y>
+      <width>352</width>
+      <height>240</height>
      </rect>
     </property>
     <property name="autoFillBackground">
