@@ -16,6 +16,9 @@
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 
+#include <algorithm>
+#include <qmath.h>
+
 #include "gurobi_c++.h"
 #include "AdaSR.h"
 
@@ -31,11 +34,11 @@ namespace custom {
     typedef cv::Vec<double, 120> VecHOGC;
 }
 
-struct Sample {
-    QRect rect;
-    double scale;
-    cv::Mat features;
-};
+//struct Sample {
+//    QRect rect;
+//    double scale;
+//    cv::Mat features;
+//};
 
 class MainWindow : public QMainWindow
 {
@@ -48,12 +51,15 @@ public:
 signals:
     void startCapture();
     void stopCapture();
+    void trackObject(cv::Mat);
+    void setupAdaSR(QRect, cv::Mat);
 
 private:
     Ui::MainWindow *ui;
 
     QAction *play_or_pause_action;
     QAction *toggle_viewer_action;
+    QAction *next_frame_action;
 
     VideoCapturer *video_capturer;
     QThread *capture_thread;
@@ -62,10 +68,15 @@ private:
 
     QGraphicsScene *scene;
 
+    //Variables for processing a single frame at a time
+    int frame_number;
+
 //    cv::VideoCapture video_capturer;
 //    cv::VideoWriter video_writer;
 
 //    cv::Mat mat_original;
+
+    cv::Mat current_frame;
 
     cv::Mat mat_processed;
 
@@ -78,19 +89,19 @@ private:
     //Sample Window Variables
     QRect _selection;
     QRect _object;
-    int _d;
-    QRect _sample_win;
-    QPoint _sample_win_top_left;
-    int _sample_win_side;
-    cv::Mat _search_area_integral_hc;
-    cv::Mat _search_area_integral_hog;
+//    int _d;
+//    QRect _sample_win;
+//    QPoint _sample_win_top_left;
+//    int _sample_win_side;
+//    cv::Mat _search_area_integral_hc;
+//    cv::Mat _search_area_integral_hog;
 //    QList<QRect> _samples;
 //    QList<cv::Mat> _sample_feaures;
 
-    //SBSR samples and object features
-    QList<Sample> _samples;
-    cv::Mat _obj_feature;
-    cv::Mat _sbsr;
+//    SBSR samples and object features
+//    QList<Sample> _samples;
+//    cv::Mat _obj_feature;
+//    cv::Mat _sbsr;
 
 
     bool _initialized;
@@ -104,27 +115,28 @@ private:
 //    cv::Mat integral_hog;
 //    bool hog_ready;
 //    bool hc_ready;
-    void createFrameIntegralHOGC(cv::Mat *hc_mat, cv::Mat *hog_mat, cv::Mat image);
-    custom::VecHC3 getHCVal(QRect rect, cv::Mat* hc_mat);
-    custom::VecHOG9 getHOGVal(QRect rect, cv::Mat* hog_mat);
-    cv::Mat getHOGCVal(cv::Mat* hc_mat, cv::Mat* hog_mat, QRect rect);
+//    void createFrameIntegralHOGC(cv::Mat *hc_mat, cv::Mat *hog_mat, cv::Mat image);
+//    custom::VecHC3 getHCVal(QRect rect, cv::Mat* hc_mat);
+//    custom::VecHOG9 getHOGVal(QRect rect, cv::Mat* hog_mat);
+//    cv::Mat getHOGCVal(cv::Mat* hc_mat, cv::Mat* hog_mat, QRect rect);
 
-    GRBEnv env;
-    void performMinimization(cv::Mat *result, QList<Sample> *samples, cv::Mat *obj_feature);
-    void calculateSBSR(cv::Mat *sbsr_dst, QList<Sample> *sample_dst, QPoint point, cv::Mat *hc_mat, cv::Mat *hog_mat);
-    double calcL1Norm(cv::Mat *mat1, cv::Mat *mat2);
+//    GRBEnv env;
+//    void performMinimization(cv::Mat *result, QList<Sample> *samples, cv::Mat *obj_feature);
+//    void calculateSBSR(cv::Mat *sbsr_dst, QList<Sample> *sample_dst, QPoint point, cv::Mat *hc_mat, cv::Mat *hog_mat);
+//    double calcL1Norm(cv::Mat *mat1, cv::Mat *mat2);
 
     //Tracking
-    cv::KalmanFilter _k_filter;
-    int _sample_count;
-    cv::Mat _adasr;
-    cv::Mat estimate;
-    cv::Mat estimate_sbsr;
-    cv::Mat estimate_pos;
-    cv::Mat prediction;
-    cv::Mat prediction_sbsr;
-    cv::Mat prediction_pos;
-    cv::Mat measurement;
+//    cv::KalmanFilter _k_filter;
+//    int _sample_count;
+//    cv::Mat _adasr;
+//    cv::Mat estimate;
+//    cv::Mat estimate_sbsr;
+//    cv::Mat estimate_pos;
+//    cv::Mat prediction;
+//    cv::Mat prediction_sbsr;
+//    cv::Mat prediction_pos;
+//    cv::Mat measurement;
+    QPoint latest_point;
 
 
 
@@ -139,10 +151,12 @@ public slots:
 
 private slots:
     void actionPlayOrPause();
+    void actionNextFrame();
     void handleNewSelection(QRect rect);
-    void handleTracking(QPoint point);
+    void handleTrackedPoint(QPoint point);
+    void handleAdaSRReady();
 };
 
-Q_DECLARE_METATYPE(cv::Mat)
+//Q_DECLARE_METATYPE(cv::Mat)
 
 #endif // MAINWINDOW_H

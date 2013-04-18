@@ -40,18 +40,22 @@ public:
 
     
 signals:
-    void initializeComplete();
-    void trackingComplete();
+    void setupComplete();
+    void trackedPoint(QPoint);
+    void error();
     
 public slots:
     void run();
-    void initialize(QRect rect, cv::Mat img);
+    void setup(QRect rect, cv::Mat img);
     void track(cv::Mat img);
 
 private:
     //Operating Variables
     bool _initialize;
     bool _tracking;
+    bool initializeAdaSR();
+    bool findObject();
+
 
     //Sample Window Variables
     QRect _view_rect;
@@ -69,23 +73,32 @@ private:
     cv::Mat _search_area_integral_hog;
 
     //SBSR samples and object features
-    QList<Sample> _samples;
+    QList<cv::Mat> _obj_images;
+    QList<cv::Mat> _obj_features;
     cv::Mat _obj_feature;
     cv::Mat _sbsr;
+    cv::Mat _sparse_coef_vector;
+    cv::Mat _sample_features;
 
     void createFrameIntegralHOGC(cv::Mat *hc_mat, cv::Mat *hog_mat, cv::Mat image);
     custom::VecHC3 getHCVal(QRect rect, cv::Mat* hc_mat);
     custom::VecHOG9 getHOGVal(QRect rect, cv::Mat* hog_mat);
     cv::Mat getHOGCVal(cv::Mat* hc_mat, cv::Mat* hog_mat, QRect rect);
+    void setupKalmanFilter();
+    void initializeKalmanFilter();
 
     GRBEnv env;
-    void performMinimization(cv::Mat *result, QList<Sample> *samples, cv::Mat *obj_feature);
+    void performMinimization(cv::Mat *result, cv::Mat *samples, cv::Mat *obj_feature);
     void calculateSBSR(cv::Mat *sbsr_dst, QList<Sample> *sample_dst, QPoint point, cv::Mat *hc_mat, cv::Mat *hog_mat);
+    void getSamples(QList<Sample> *sample_dst, QPoint point, cv::Mat *hc_mat, cv::Mat *hog_mat);
+    void getSampleFeatures(cv::Mat*sample_features, QPoint point, cv::Mat *hc_mat, cv::Mat *hog_mat);
     double calcL1Norm(cv::Mat *mat1, cv::Mat *mat2);
 
     //Tracking
+    cv::Mat _tracking_img;
     cv::KalmanFilter _k_filter;
     int _sample_count;
+    cv::Mat transitions;
     cv::Mat _adasr;
     cv::Mat estimate;
     cv::Mat estimate_sbsr;
@@ -94,6 +107,8 @@ private:
     cv::Mat prediction_sbsr;
     cv::Mat prediction_pos;
     cv::Mat measurement;
+    int update_counter;
+    QPoint latest_point;
     
 };
 
