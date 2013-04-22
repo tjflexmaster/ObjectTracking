@@ -109,7 +109,6 @@ bool AdaSR::findObject()
 //        qDebug() << _object.center();
     qDebug() << "Predicted Point: " << predicted_point;
 
-
     //During the tracking we only look for the object within the frame, we do not
     //create a sample window.  For the integral image calculations we must create
     //select an area which encompasses all of the objects within the frame
@@ -140,11 +139,12 @@ bool AdaSR::findObject()
         cv::Mat min_diff_features(120, 100, CV_64F);
         QPoint min_diff_point;
         cv::Mat min_diff_sbsr;
+        QPoint center_diff = _object.center() - _object.topLeft();
 
         cv::Mat candidate_sbsr;
         cv::Mat candidate_features = cv::Mat(120, 1, CV_64F);
 
-        QPoint center_diff = _object.center() - _object.topLeft();
+
         for(int y=start_point.y(); y < end_point.y(); y++) {
             for (int x=start_point.x(); x < end_point.x(); x++) {
 

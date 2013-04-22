@@ -83,6 +83,16 @@ MainWindow::MainWindow(QWidget *parent) :
     _update_sample_window = false;
     connect(ui->original_display, SIGNAL(newSelection(QRect)), this, SLOT(handleNewSelection(QRect)));
 
+    //Save video file
+//    QString output_src = QString("C:\\Users\\TJ-ASUS\\My Videos\\adasr_") + QTime::currentTime().toString("hh:mm:ss") + QString(".avi");
+    QString output_src = QString("test_video2.avi");
+//    cv::Size frame_size(352, 240);
+    cv::Size frame_size(640, 480);
+    video_writer.open(output_src.toStdString(), -1, 15.0, frame_size, true);
+
+    if ( !video_writer.isOpened() ) {
+        ui->information_display->appendPlainText(QString("Unable to open output video"));
+    }
 }
 
 MainWindow::~MainWindow()
@@ -174,21 +184,23 @@ void MainWindow::processNextFrame(cv::Mat next_frame)
 
 void MainWindow::actionPlayOrPause()
 {
-    if( !video_capturer->isPaused() ) {
-        std::cout << "Paused" << std::endl;
-        video_capturer->stopCapture();
-        play_or_pause_action->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
-    } else {
-        std::cout << "Playing" << std::endl;
-        video_capturer->startCapture();
-        play_or_pause_action->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
-    }
+    frame_number = 1901;
+//    if( !video_capturer->isPaused() ) {
+//        std::cout << "Paused" << std::endl;
+//        video_capturer->stopCapture();
+//        play_or_pause_action->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+//    } else {
+//        std::cout << "Playing" << std::endl;
+//        video_capturer->startCapture();
+//        play_or_pause_action->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
+//    }
 }
 
 void MainWindow::actionNextFrame()
 {
     cv::Mat image;
-    QString path("C:\\Users\\TJ-ASUS\\Downloads\\redteam\\frame00000");
+//    QString path("C:\\Users\\TJ-ASUS\\Downloads\\redteam\\frame00000");
+    QString path("C:\\Users\\TJ-ASUS\\Downloads\\egtest01\\frame00000");
     QString num = QString::number(frame_number);
     QString mod_path = path.left(path.size() - num.size());
     QString final = mod_path + num + QString(".jpg");
@@ -212,7 +224,7 @@ void MainWindow::actionNextFrame()
         emit trackObject(image);
     }
 
-    frame_number+=5;
+    frame_number++;
 }
 
 void MainWindow::toggleViewer()
@@ -245,12 +257,21 @@ void MainWindow::handleTrackedPoint(QPoint point)
 
     cv::circle(mat_processed, cv::Point(latest_point.x(), latest_point.y()), 30, cv::Scalar(0,255,0));
 
+    //Save the processed img into the video
+    video_writer << mat_processed;
+
     cv::cvtColor(mat_processed, mat_processed, CV_BGR2RGB);
     QImage processed_img((uchar*)mat_processed.data, mat_processed.cols, mat_processed.rows, mat_processed.step, QImage::Format_RGB888);
 
     ui->processed_display->setPixmap(QPixmap::fromImage(processed_img));
 
     next_frame_action->setDisabled(false);
+
+    if ( frame_number < 1900 ) {
+        actionNextFrame();
+    } else {
+        video_writer.release();
+    }
 }
 
 void MainWindow::handleAdaSRReady()

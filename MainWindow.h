@@ -68,6 +68,8 @@ private:
 
     QGraphicsScene *scene;
 
+    cv::VideoWriter video_writer;
+
     //Variables for processing a single frame at a time
     int frame_number;
 
